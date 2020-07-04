@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+</head>
+<body>
+	<div id="ctx">
+		<table class="table">
+			<tr>
+				<td>单据编号：</td>
+				<td><input type="text" v-model="bill.billno"></td>
+				<td>单据日期：</td>
+				<td><input type="date" v-model="bill.billdate"@change="handlerBillNo" ></td>
+			</tr>
+			<tr>
+				<td>供应商：</td>
+				<td><input type="text" v-model="bill.suppliername"></td>
+				<td>供应商地址：</td>
+				<td><input type="text"v-model="bill.supplieraddress"></td>
+			</tr>
+			<tr>
+				<td>部门：</td>
+				<td><input type="text"v-model="bill.department"></td>
+				<td>仓库：</td>
+				<td><input type="text"v-model="bill.warehouse"></td>
+			</tr>
+			<tr>
+				<td>采购人员：</td>
+				<td><input type="text"v-model="bill.buyer"></td>
+				<td>制单人员：</td>
+				<td><input type="text"v-model="bill.executor"></td>
+			</tr>
+			<tr>
+				<td>入库明细：</td>
+				<td colspan="3"><textarea rows="5" cols="45"v-model="details"></textarea><td>
+			</tr>
+		</table>
+		<table class="table">
+			<tr>
+			<td>单据编号</td>
+			<td>单据日期</td>
+			<td>供应商</td>
+			<td>仓库</td>
+			<td>采购人员</td>
+			<td>总金额</td>
+			</tr>
+			<tr v-for="item in list" @click="handlerBill(item)">
+			<td>{{item.billno}}</td>
+			<td>{{item.billdate}}</td>
+			<td>{{item.suppliername}}</td>
+			<td>{{item.warehouse}}</td>
+			<td>{{item.buyer}}</td>
+			<td>{{item.sumprice}}</td>
+			</tr>
+			
+		</table>
+		<button @click="save">保存</button>
+	</div>
+	<script type="text/javascript" th:src="@{/js/jquery-1.12.4.js}"></script>
+	<script type="text/javascript" th:src="@{/js/vue.js}"></script>
+	<script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
+	<script type="text/javascript">
+		var vm=new Vue({
+			el:"#ctx",
+			data(){
+				return{
+					list:[],
+					bill:{},
+					details:""
+				}
+			},
+			methods:{
+				gettow(){
+					var that=this;
+					$.ajax({
+						url:"[[@{/bill/Byfind}]]",
+						success:function(result){
+							that.list=result;
+						}
+					});
+				},
+				handlerBillNo(){
+					var billdate = this.bill.billdate;
+					var that = this;
+					$.ajax({
+						url:"[[@{/bill/findMaxBillNo}]]",
+						data:{billDate:billdate},
+						dataType:"text",
+						success:function(result){
+							console.log(result);
+							that.bill.billno = result;
+						}
+					})
+				},
+				handlerBill(bill){
+					var that = this;
+					$.ajax({
+						url:"[[@{/bill/findByBillNo}]]",
+						data:{billno:bill.billno},
+						dataType:"json",
+						success:function(result){
+							that.bill = result;
+							that.details = JSON.stringify(result.details);
+						}
+					})
+				},save(){
+					var bill = this.bill;
+					//将字符串转换成对象
+					bill.details = JSON.parse(this.details);
+					var that = this;
+					$.ajax({
+						url:"[[@{/bill/create}]]",
+						type:"post",
+						data:JSON.stringify(bill),
+						contentType:"application/json;charset=utf-8",
+						success:function(result){
+							that.gettow();
+						}
+					})
+				}
+			},created(){
+				this.gettow();
+			}
+		});
+	</script>
+</html>
